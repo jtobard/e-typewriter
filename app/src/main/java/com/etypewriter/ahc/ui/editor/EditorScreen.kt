@@ -1,10 +1,15 @@
 package com.etypewriter.ahc.ui.editor
 
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,11 +26,25 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+
+private const val FIXED_LINE_INDEX = 2
 
 @Composable
 fun EditorScreen(
@@ -53,35 +72,116 @@ fun EditorScreen(
 
         HorizontalDivider(color = colors.outline.copy(alpha = 0.3f), thickness = 0.5.dp)
 
-        Box(
-            modifier = Modifier
-                .weight(1f)
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp, vertical = 16.dp)
-        ) {
-            if (viewModel.text.isEmpty()) {
-                Text(
-                    text = "Start typing...",
-                    style = typography.bodyLarge.copy(
-                        color = colors.outline.copy(alpha = 0.5f)
-                    ),
-                )
-            }
-
-            BasicTextField(
-                value = viewModel.text,
-                onValueChange = viewModel::onTextChange,
-                modifier = Modifier.fillMaxSize(),
-                textStyle = typography.bodyLarge.copy(color = colors.onBackground),
-                cursorBrush = SolidColor(colors.onBackground),
-            )
-        }
+        TypewriterEditor(
+            viewModel = viewModel,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            textStyle = typography.bodyLarge.copy(color = colors.onBackground),
+            placeholderStyle = typography.bodyLarge.copy(
+                color = colors.outline.copy(alpha = 0.5f)
+            ),
+            cursorColor = colors.onBackground,
+        )
 
         HorizontalDivider(color = colors.outline.copy(alpha = 0.3f), thickness = 0.5.dp)
 
         StatusBar(
             text = viewModel.text,
             typography = typography.labelSmall,
+        )
+    }
+}
+
+@Composable
+private fun TypewriterEditor(
+    viewModel: EditorViewModel,
+    modifier: Modifier,
+    textStyle: TextStyle,
+    placeholderStyle: TextStyle,
+    cursorColor: androidx.compose.ui.graphics.Color,
+) {
+    val density = LocalDensity.current
+    val estimatedLineHeightPx = with(density) { textStyle.lineHeight.toPx() }
+
+    var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
+    var boxSize by remember { mutableStateOf(IntSize.Zero) }
+
+    val cursorOffset = viewModel.textFieldValue.selection.start
+    val layout = textLayoutResult
+
+    val targetTranslationY: Float
+    val targetTranslationX: Float
+
+    if (layout != null && layout.lineCount > 0) {
+        val lineHeight = layout.getLineBottom(0) - layout.getLineTop(0)
+        val cursorLine = layout.getLineForOffset(
+            cursorOffset.coerceAtMost(layout.layoutInput.text.length)
+        )
+        targetTranslationY = FIXED_LINE_INDEX * lineHeight - layout.getLineTop(cursorLine)
+
+        val cursorRect = layout.getCursorRect(
+            cursorOffset.coerceAtMost(layout.layoutInput.text.length)
+        )
+        targetTranslationX = boxSize.width / 2f - cursorRect.left
+    } else {
+        targetTranslationY = FIXED_LINE_INDEX * estimatedLineHeightPx
+        targetTranslationX = boxSize.width / 2f
+    }
+
+    val animatedTranslationY by animateFloatAsState(
+        targetValue = targetTranslationY,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioNoBouncy,
+            stiffness = Spring.StiffnessMedium,
+        ),
+        label = "typewriter-y",
+    )
+    val animatedTranslationX by animateFloatAsState(
+        targetValue = targetTranslationX,
+        animationSpec = snap(),
+        label = "typewriter-x",
+    )
+
+    Box(
+        modifier = modifier
+            .clipToBounds()
+            .onSizeChanged { boxSize = it }
+    ) {
+        if (viewModel.text.isEmpty()) {
+            Text(
+                text = "Start typing...",
+                style = placeholderStyle,
+                modifier = Modifier
+                    .graphicsLayer {
+                        translationY = FIXED_LINE_INDEX * estimatedLineHeightPx
+                        translationX = boxSize.width / 2f
+                    }
+            )
+        }
+
+        BasicTextField(
+            value = viewModel.textFieldValue,
+            onValueChange = viewModel::onTextFieldValueChange,
+            modifier = Modifier
+                .layout { measurable, constraints ->
+                    val unconstrained = Constraints(
+                        minWidth = 0,
+                        maxWidth = Constraints.Infinity,
+                        minHeight = constraints.minHeight,
+                        maxHeight = constraints.maxHeight,
+                    )
+                    val placeable = measurable.measure(unconstrained)
+                    layout(constraints.maxWidth, placeable.height.coerceAtLeast(constraints.maxHeight)) {
+                        placeable.place(0, 0)
+                    }
+                }
+                .fillMaxHeight()
+                .graphicsLayer {
+                    translationX = animatedTranslationX
+                    translationY = animatedTranslationY
+                },
+            textStyle = textStyle,
+            cursorBrush = SolidColor(cursorColor),
+            onTextLayout = { textLayoutResult = it },
         )
     }
 }
