@@ -1,0 +1,55 @@
+# Gradle
+.gradle/
+build/
+
+# Local configuration
+local.properties
+
+# Android Studio / IntelliJ
+*.iml
+.idea/
+*.ipr
+*.iws
+out/
+
+# Android
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+
+# Kotlin
+*.kotlin_module
+
+# NDK
+obj/
+.externalNativeBuild/
+.cxx/
+
+# Signing
+*.jks
+*.keystore
+key.properties
+
+# Logs y temporales
+*.log
+*.tmp
+*.temp
+*.swp
+*~
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Cursor / VSCode (opcional, descomenta si quieres ignorar)
+# .vscode/
+# .cursor/
