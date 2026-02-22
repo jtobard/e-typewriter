@@ -26,6 +26,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -36,20 +37,23 @@ import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.layout.layout
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.etypewriter.ahc.ui.theme.SheetDeskGray
+import com.etypewriter.ahc.util.SoundManager
 
 private const val FIXED_LINE_INDEX = 2
 /** Una pulgada en dp (Android: 160 dp ≈ 1 inch). */
 private val ONE_INCH_DP = 96.dp
+private const val BELL_TRIGGER_CHARS = 63
 
 @Composable
 fun EditorScreen(
@@ -60,6 +64,23 @@ fun EditorScreen(
 ) {
     val colors = MaterialTheme.colorScheme
     val typography = MaterialTheme.typography
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    val soundManager = viewModel.soundManager
+
+    DisposableEffect(lifecycleOwner) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                soundManager.startHum()
+            } else if (event == Lifecycle.Event.ON_PAUSE) {
+                soundManager.pauseHum()
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -85,6 +106,7 @@ fun EditorScreen(
                 color = colors.outline.copy(alpha = 0.5f)
             ),
             cursorColor = colors.onBackground,
+            soundManager = soundManager
         )
 
         HorizontalDivider(color = colors.outline.copy(alpha = 0.3f), thickness = 0.5.dp)
@@ -103,11 +125,12 @@ private fun TypewriterEditor(
     textStyle: TextStyle,
     placeholderStyle: TextStyle,
     cursorColor: androidx.compose.ui.graphics.Color,
+    soundManager: SoundManager,
 ) {
     val density = LocalDensity.current
     val textMeasurer = rememberTextMeasurer()
     val estimatedLineHeightPx = with(density) { textStyle.lineHeight.toPx() }
-    val oneInchPx = with(density) { ONE_INCH_DP.toPx() }.toInt()
+    val oneInchPx = with(density) { ONE_INCH_DP.toPx() }
 
     val width70CharsPx = remember(textStyle) {
         textMeasurer.measure(
@@ -122,7 +145,7 @@ private fun TypewriterEditor(
 
     val cursorOffset = viewModel.textFieldValue.selection.start
     val layout = textLayoutResult
-    val contentHeightPx = layout?.size?.height ?: boxSize.height
+    val contentHeightPx = layout?.size?.height?.toFloat() ?: estimatedLineHeightPx
 
     val targetTranslationY: Float
     val targetTranslationX: Float
@@ -132,15 +155,14 @@ private fun TypewriterEditor(
         val cursorLine = layout.getLineForOffset(
             cursorOffset.coerceAtMost(layout.layoutInput.text.length)
         )
-        targetTranslationY = FIXED_LINE_INDEX * lineHeight - layout.getLineTop(cursorLine)
-
         val cursorRect = layout.getCursorRect(
             cursorOffset.coerceAtMost(layout.layoutInput.text.length)
         )
-        targetTranslationX = (sheetWidthPx / 2f) - (oneInchPx + cursorRect.left)
+        targetTranslationX = boxSize.width / 2f - oneInchPx - cursorRect.left
+        targetTranslationY = FIXED_LINE_INDEX * lineHeight - oneInchPx - layout.getLineTop(cursorLine)
     } else {
-        targetTranslationY = FIXED_LINE_INDEX * estimatedLineHeightPx
-        targetTranslationX = (sheetWidthPx / 2f) - oneInchPx
+        targetTranslationX = boxSize.width / 2f - oneInchPx
+        targetTranslationY = FIXED_LINE_INDEX * estimatedLineHeightPx - oneInchPx
     }
 
     val animatedTranslationY by animateFloatAsState(
@@ -157,7 +179,7 @@ private fun TypewriterEditor(
         label = "typewriter-x",
     )
 
-    val sheetHeightPx = (contentHeightPx + boxSize.height * 2).coerceAtLeast(boxSize.height)
+    val sheetHeightPx = (contentHeightPx + oneInchPx + boxSize.height).coerceAtLeast(boxSize.height.toFloat())
 
     Box(
         modifier = modifier
@@ -167,63 +189,64 @@ private fun TypewriterEditor(
     ) {
         Box(
             modifier = Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(),
-            contentAlignment = Alignment.Center,
+                .width(with(density) { sheetWidthPx.toDp() })
+                .height(with(density) { sheetHeightPx.toDp() })
+                .graphicsLayer {
+                    translationX = animatedTranslationX
+                    translationY = animatedTranslationY
+                }
         ) {
             Box(
-                modifier = Modifier
-                    .width(with(density) { sheetWidthPx.toDp() })
-                    .height(with(density) { sheetHeightPx.toDp() })
-                    .graphicsLayer {
-                        translationX = animatedTranslationX
-                        translationY = animatedTranslationY
-                    }
-            ) {
-                Box(
-                    Modifier
-                        .matchParentSize()
-                        .background(Color.White)
-                )
-                if (viewModel.text.isEmpty()) {
-                    Text(
-                        text = "Start typing...",
-                        style = placeholderStyle,
-                        modifier = Modifier
-                            .padding(
-                                start = ONE_INCH_DP,
-                                top = ONE_INCH_DP + with(density) { (FIXED_LINE_INDEX * estimatedLineHeightPx).toDp() },
-                            )
+                Modifier
+                    .matchParentSize()
+                    .background(Color.White)
+            )
+            if (viewModel.text.isEmpty()) {
+                Text(
+                    text = "Start typing...",
+                    style = placeholderStyle,
+                    modifier = Modifier.padding(
+                        start = ONE_INCH_DP,
+                        top = ONE_INCH_DP,
                     )
-                }
-                BasicTextField(
-                    value = viewModel.textFieldValue,
-                    onValueChange = viewModel::onTextFieldValueChange,
-                    modifier = Modifier
-                        .padding(
-                            start = ONE_INCH_DP,
-                            end = ONE_INCH_DP,
-                            top = ONE_INCH_DP,
-                        )
-                        .layout { measurable, constraints ->
-                            val unconstrained = Constraints(
-                                minWidth = 0,
-                                maxWidth = width70CharsPx,
-                                minHeight = constraints.minHeight,
-                                maxHeight = constraints.maxHeight,
-                            )
-                            val placeable = measurable.measure(unconstrained)
-                            layout(sheetWidthPx, placeable.height.coerceAtLeast(constraints.maxHeight)) {
-                                placeable.place(0, 0)
-                            }
-                        }
-                        .fillMaxHeight()
-                        .fillMaxWidth(),
-                    textStyle = textStyle,
-                    cursorBrush = SolidColor(cursorColor),
-                    onTextLayout = { textLayoutResult = it },
                 )
             }
+            BasicTextField(
+                value = viewModel.textFieldValue,
+                onValueChange = { newValue ->
+                    val oldText = viewModel.textFieldValue.text
+                    if (newValue.text != oldText && newValue.text.length > oldText.length) {
+                        val newNewlines = newValue.text.count { it == '\n' }
+                        val oldNewlines = oldText.count { it == '\n' }
+                        if (newNewlines > oldNewlines) {
+                            soundManager.playReturnSound()
+                        } else {
+                            soundManager.playKeySound()
+                        }
+                        soundManager.triggerHapticFeedback()
+
+                        val cursor = newValue.selection.start
+                        val textBeforeCursor = newValue.text.take(cursor)
+                        val lastNewlineIndex = textBeforeCursor.lastIndexOf('\n')
+                        val currentLineLength = cursor - (lastNewlineIndex + 1)
+                        if (currentLineLength == BELL_TRIGGER_CHARS) {
+                            soundManager.playBellSound()
+                        }
+                    }
+                    viewModel.onTextFieldValueChange(newValue)
+                },
+                modifier = Modifier
+                    .padding(
+                        start = ONE_INCH_DP,
+                        end = ONE_INCH_DP,
+                        top = ONE_INCH_DP,
+                    )
+                    .fillMaxWidth()
+                    .fillMaxHeight(),
+                textStyle = textStyle,
+                cursorBrush = SolidColor(cursorColor),
+                onTextLayout = { textLayoutResult = it },
+            )
         }
     }
 }

@@ -9,8 +9,11 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.lifecycle.AndroidViewModel
 import com.etypewriter.ahc.data.FileManager
+import com.etypewriter.ahc.util.SoundManager
 
 class EditorViewModel(application: Application) : AndroidViewModel(application) {
+
+    val soundManager = SoundManager(application)
 
     var textFieldValue by mutableStateOf(TextFieldValue(""))
         private set
@@ -90,5 +93,10 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         fileName = "untitled.md"
         currentUri = null
         hasUnsavedChanges = false
+    }
+
+    override fun onCleared() {
+        super.onCleared()
+        soundManager.release()
     }
 }
