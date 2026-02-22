@@ -4,6 +4,7 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.spring
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -81,6 +82,9 @@ fun EditorScreen(
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
+
+    // Consume Back so that double-space/double-Enter (which can send Back on some devices) doesn't leave the editor.
+    BackHandler { }
 
     Column(
         modifier = Modifier
