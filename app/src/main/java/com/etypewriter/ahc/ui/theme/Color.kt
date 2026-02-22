@@ -8,3 +8,5 @@ val InkBlack = Color(0xFF1A1A1A)
 val InkGray = Color(0xFF4A4A4A)
 val InkLightGray = Color(0xFF8A8A8A)
 val RibbonRed = Color(0xFF8B0000)
+/** Gris del área alrededor de la hoja (escritorio). */
+val SheetDeskGray = Color(0xFFD0CEC8)

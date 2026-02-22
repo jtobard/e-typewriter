@@ -27,15 +27,36 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
         private set
 
     fun onTextFieldValueChange(newValue: TextFieldValue) {
-        val textChanged = newValue.text != textFieldValue.text
+        val wrapped = wrapLinesToMaxChars(newValue.text, CHARS_PER_LINE)
+        val textChanged = wrapped != textFieldValue.text
         if (textChanged) {
-            textFieldValue = newValue
+            val newCursor = wrappedCursorFromOriginal(newValue.text, newValue.selection.start, CHARS_PER_LINE)
+            textFieldValue = TextFieldValue(wrapped, TextRange(newCursor.coerceIn(0, wrapped.length)))
             hasUnsavedChanges = true
         } else if (newValue.selection != textFieldValue.selection) {
             val cursorPos = newValue.selection.start
             val lineEnd = findEndOfLine(newValue.text, cursorPos)
             textFieldValue = newValue.copy(selection = TextRange(lineEnd))
         }
+    }
+
+    private fun wrapLinesToMaxChars(text: String, maxPerLine: Int): String {
+        if (maxPerLine <= 0) return text
+        return text.split("\n").flatMap { line ->
+            line.chunked(maxPerLine)
+        }.joinToString("\n")
+    }
+
+    /** Cursor position in wrapped text corresponding to original position in unwrapped text. */
+    private fun wrappedCursorFromOriginal(text: String, originalCursor: Int, maxPerLine: Int): Int {
+        if (maxPerLine <= 0) return originalCursor
+        val prefix = text.take(originalCursor)
+        val wrappedPrefix = prefix.split("\n").flatMap { it.chunked(maxPerLine) }.joinToString("\n")
+        return wrappedPrefix.length
+    }
+
+    companion object {
+        const val CHARS_PER_LINE = 70
     }
 
     private fun findEndOfLine(text: String, position: Int): Int {

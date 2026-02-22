@@ -33,6 +33,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.layout
@@ -40,11 +41,15 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import com.etypewriter.ahc.ui.theme.SheetDeskGray
 
 private const val FIXED_LINE_INDEX = 2
+/** Una pulgada en dp (Android: 160 dp ≈ 1 inch). */
+private val ONE_INCH_DP = 96.dp
 
 @Composable
 fun EditorScreen(
@@ -100,13 +105,24 @@ private fun TypewriterEditor(
     cursorColor: androidx.compose.ui.graphics.Color,
 ) {
     val density = LocalDensity.current
+    val textMeasurer = rememberTextMeasurer()
     val estimatedLineHeightPx = with(density) { textStyle.lineHeight.toPx() }
+    val oneInchPx = with(density) { ONE_INCH_DP.toPx() }.toInt()
+
+    val width70CharsPx = remember(textStyle) {
+        textMeasurer.measure(
+            text = "M".repeat(EditorViewModel.CHARS_PER_LINE),
+            style = textStyle,
+        ).size.width
+    }
+    val sheetWidthPx = 2 * oneInchPx + width70CharsPx
 
     var textLayoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
     var boxSize by remember { mutableStateOf(IntSize.Zero) }
 
     val cursorOffset = viewModel.textFieldValue.selection.start
     val layout = textLayoutResult
+    val contentHeightPx = layout?.size?.height ?: boxSize.height
 
     val targetTranslationY: Float
     val targetTranslationX: Float
@@ -121,10 +137,10 @@ private fun TypewriterEditor(
         val cursorRect = layout.getCursorRect(
             cursorOffset.coerceAtMost(layout.layoutInput.text.length)
         )
-        targetTranslationX = boxSize.width / 2f - cursorRect.left
+        targetTranslationX = (sheetWidthPx / 2f) - (oneInchPx + cursorRect.left)
     } else {
         targetTranslationY = FIXED_LINE_INDEX * estimatedLineHeightPx
-        targetTranslationX = boxSize.width / 2f
+        targetTranslationX = (sheetWidthPx / 2f) - oneInchPx
     }
 
     val animatedTranslationY by animateFloatAsState(
@@ -141,48 +157,74 @@ private fun TypewriterEditor(
         label = "typewriter-x",
     )
 
+    val sheetHeightPx = (contentHeightPx + boxSize.height * 2).coerceAtLeast(boxSize.height)
+
     Box(
         modifier = modifier
             .clipToBounds()
+            .background(SheetDeskGray)
             .onSizeChanged { boxSize = it }
     ) {
-        if (viewModel.text.isEmpty()) {
-            Text(
-                text = "Start typing...",
-                style = placeholderStyle,
-                modifier = Modifier
-                    .graphicsLayer {
-                        translationY = FIXED_LINE_INDEX * estimatedLineHeightPx
-                        translationX = boxSize.width / 2f
-                    }
-            )
-        }
-
-        BasicTextField(
-            value = viewModel.textFieldValue,
-            onValueChange = viewModel::onTextFieldValueChange,
+        Box(
             modifier = Modifier
-                .layout { measurable, constraints ->
-                    val unconstrained = Constraints(
-                        minWidth = 0,
-                        maxWidth = Constraints.Infinity,
-                        minHeight = constraints.minHeight,
-                        maxHeight = constraints.maxHeight,
-                    )
-                    val placeable = measurable.measure(unconstrained)
-                    layout(constraints.maxWidth, placeable.height.coerceAtLeast(constraints.maxHeight)) {
-                        placeable.place(0, 0)
+                .fillMaxWidth()
+                .fillMaxHeight(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Box(
+                modifier = Modifier
+                    .width(with(density) { sheetWidthPx.toDp() })
+                    .height(with(density) { sheetHeightPx.toDp() })
+                    .graphicsLayer {
+                        translationX = animatedTranslationX
+                        translationY = animatedTranslationY
                     }
+            ) {
+                Box(
+                    Modifier
+                        .matchParentSize()
+                        .background(Color.White)
+                )
+                if (viewModel.text.isEmpty()) {
+                    Text(
+                        text = "Start typing...",
+                        style = placeholderStyle,
+                        modifier = Modifier
+                            .padding(
+                                start = ONE_INCH_DP,
+                                top = ONE_INCH_DP + with(density) { (FIXED_LINE_INDEX * estimatedLineHeightPx).toDp() },
+                            )
+                    )
                 }
-                .fillMaxHeight()
-                .graphicsLayer {
-                    translationX = animatedTranslationX
-                    translationY = animatedTranslationY
-                },
-            textStyle = textStyle,
-            cursorBrush = SolidColor(cursorColor),
-            onTextLayout = { textLayoutResult = it },
-        )
+                BasicTextField(
+                    value = viewModel.textFieldValue,
+                    onValueChange = viewModel::onTextFieldValueChange,
+                    modifier = Modifier
+                        .padding(
+                            start = ONE_INCH_DP,
+                            end = ONE_INCH_DP,
+                            top = ONE_INCH_DP,
+                        )
+                        .layout { measurable, constraints ->
+                            val unconstrained = Constraints(
+                                minWidth = 0,
+                                maxWidth = width70CharsPx,
+                                minHeight = constraints.minHeight,
+                                maxHeight = constraints.maxHeight,
+                            )
+                            val placeable = measurable.measure(unconstrained)
+                            layout(sheetWidthPx, placeable.height.coerceAtLeast(constraints.maxHeight)) {
+                                placeable.place(0, 0)
+                            }
+                        }
+                        .fillMaxHeight()
+                        .fillMaxWidth(),
+                    textStyle = textStyle,
+                    cursorBrush = SolidColor(cursorColor),
+                    onTextLayout = { textLayoutResult = it },
+                )
+            }
+        }
     }
 }
 
