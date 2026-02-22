@@ -55,6 +55,8 @@ private const val FIXED_LINE_INDEX = 2
 /** Una pulgada en dp (Android: 160 dp ≈ 1 inch). */
 private val ONE_INCH_DP = 96.dp
 private const val BELL_TRIGGER_CHARS = 63
+/** Page height in lines (A4-like). */
+private const val LINES_PER_PAGE = 70
 
 @Composable
 fun EditorScreen(
@@ -183,7 +185,10 @@ private fun TypewriterEditor(
         label = "typewriter-x",
     )
 
-    val sheetHeightPx = (contentHeightPx + oneInchPx + boxSize.height).coerceAtLeast(boxSize.height.toFloat())
+    val minSheetHeightPx = oneInchPx + LINES_PER_PAGE * estimatedLineHeightPx + oneInchPx
+    val sheetHeightPx = (contentHeightPx + oneInchPx + boxSize.height)
+        .coerceAtLeast(minSheetHeightPx)
+        .coerceAtLeast(boxSize.height.toFloat())
 
     Box(
         modifier = modifier
