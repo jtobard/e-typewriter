@@ -45,17 +45,27 @@ class EditorViewModel(application: Application) : AndroidViewModel(application) 
 
     private fun wrapLinesToMaxChars(text: String, maxPerLine: Int): String {
         if (maxPerLine <= 0) return text
-        return text.split("\n").flatMap { line ->
-            line.chunked(maxPerLine)
-        }.joinToString("\n")
+        return text
+            .split("\n")
+            .flatMap { wrapSingleLinePreservingBlanks(it, maxPerLine) }
+            .joinToString("\n")
     }
 
     /** Cursor position in wrapped text corresponding to original position in unwrapped text. */
     private fun wrappedCursorFromOriginal(text: String, originalCursor: Int, maxPerLine: Int): Int {
         if (maxPerLine <= 0) return originalCursor
         val prefix = text.take(originalCursor)
-        val wrappedPrefix = prefix.split("\n").flatMap { it.chunked(maxPerLine) }.joinToString("\n")
+        val wrappedPrefix = prefix
+            .split("\n")
+            .flatMap { wrapSingleLinePreservingBlanks(it, maxPerLine) }
+            .joinToString("\n")
         return wrappedPrefix.length
+    }
+
+    private fun wrapSingleLinePreservingBlanks(line: String, maxPerLine: Int): List<String> {
+        // chunked() over an empty string returns [], which would drop intentional blank lines.
+        if (line.isEmpty()) return listOf("")
+        return line.chunked(maxPerLine)
     }
 
     companion object {
