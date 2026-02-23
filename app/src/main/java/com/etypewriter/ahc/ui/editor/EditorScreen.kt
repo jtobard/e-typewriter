@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -35,6 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
@@ -155,20 +158,24 @@ private fun TypewriterEditor(
 
     val targetTranslationY: Float
     val targetTranslationX: Float
+    val screenCenterY = boxSize.height / 2f
 
     if (layout != null && layout.lineCount > 0) {
-        val lineHeight = layout.getLineBottom(0) - layout.getLineTop(0)
         val cursorLine = layout.getLineForOffset(
             cursorOffset.coerceAtMost(layout.layoutInput.text.length)
         )
         val cursorRect = layout.getCursorRect(
             cursorOffset.coerceAtMost(layout.layoutInput.text.length)
         )
+
+        val fieldVisibleHeight = (boxSize.height.toFloat() - oneInchPx).coerceAtLeast(0f)
+        val internalScrollPx = (layout.getLineBottom(cursorLine) - fieldVisibleHeight).coerceAtLeast(0f)
+
         targetTranslationX = boxSize.width / 2f - oneInchPx - cursorRect.left
-        targetTranslationY = FIXED_LINE_INDEX * lineHeight - oneInchPx - layout.getLineTop(cursorLine)
+        targetTranslationY = screenCenterY - oneInchPx - layout.getLineTop(cursorLine) + internalScrollPx
     } else {
         targetTranslationX = boxSize.width / 2f - oneInchPx
-        targetTranslationY = FIXED_LINE_INDEX * estimatedLineHeightPx - oneInchPx
+        targetTranslationY = screenCenterY - oneInchPx
     }
 
     val animatedTranslationY by animateFloatAsState(
@@ -185,9 +192,9 @@ private fun TypewriterEditor(
         label = "typewriter-x",
     )
 
-    val minSheetHeightPx = oneInchPx + LINES_PER_PAGE * estimatedLineHeightPx + oneInchPx
+    val pageHeightPx = oneInchPx + LINES_PER_PAGE * estimatedLineHeightPx + oneInchPx
     val sheetHeightPx = (contentHeightPx + oneInchPx + boxSize.height)
-        .coerceAtLeast(minSheetHeightPx)
+        .coerceAtLeast(pageHeightPx)
         .coerceAtLeast(boxSize.height.toFloat())
 
     Box(
@@ -198,18 +205,19 @@ private fun TypewriterEditor(
     ) {
         Box(
             modifier = Modifier
-                .width(with(density) { sheetWidthPx.toDp() })
+                .requiredWidth(with(density) { sheetWidthPx.toDp() })
                 .height(with(density) { sheetHeightPx.toDp() })
+                .drawBehind {
+                    drawRect(
+                        color = Color.White,
+                        size = Size(size.width, sheetHeightPx),
+                    )
+                }
                 .graphicsLayer {
                     translationX = animatedTranslationX
                     translationY = animatedTranslationY
                 }
         ) {
-            Box(
-                Modifier
-                    .matchParentSize()
-                    .background(Color.White)
-            )
             if (viewModel.text.isEmpty()) {
                 Text(
                     text = "Start typing...",
