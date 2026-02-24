@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.etypewriter.ahc"
+    namespace = "com.googlelauncher"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.etypewriter.ahc"
+        applicationId = "com.googlelauncher"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
