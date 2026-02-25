@@ -73,6 +73,15 @@ El APK quedará en:
 
 **Importante:** Guarda una copia del `.keystore` y de las contraseñas. Para futuras actualizaciones del mismo app id necesitarás firmar con el mismo keystore.
 
+### Si en el dispositivo dice "No se ha podido analizar el paquete" (ej. Onyx Boox)
+
+- **Comprueba que el APK no esté corrupto:** el archivo puede haberse cortado al descargar o copiar. Compara el tamaño del archivo con el original; mejor aún, pasa el APK por USB en lugar de descargarlo por el navegador del dispositivo.
+- **Prueba un APK con targetSdk 30** (más compatible con instaladores de algunos fabricantes):
+  ```bash
+  ./gradlew assembleRelease -PbooxCompatible=true
+  ```
+  El APK sigue en `app/build/outputs/apk/release/app-release.apk`. Instala ese en el Boox.
+
 ## Roadmap
 
 Importante:

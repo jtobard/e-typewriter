@@ -13,7 +13,8 @@ android {
     defaultConfig {
         applicationId = "com.etypwwriter.launcher"
         minSdk = 26
-        targetSdk = 35
+        // Para dispositivos como Onyx Boox: ./gradlew assembleRelease -PbooxCompatible
+        targetSdk = if (project.findProperty("booxCompatible") == "true") 30 else 35
         versionCode = 1
         versionName = "0.1.0"
     }
