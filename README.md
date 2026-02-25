@@ -1,19 +1,33 @@
-# etypwwriter launcher (Fase 0)
-Este es un nuevo proyecto de launcher con estética de máquina de escribir.
+# etypwwriter launcher (Version 1.0)
+Este es un launcher minimalista para Android con una estética inspirada en las máquinas de escribir, centrado en la tipografía y la simplicidad.
 
-Estado actual:
-- Fase 0: Estructura base completada.
-- Aplicación de tipo Home Launcher configurada.
-- Jetpack Compose integrado.
+## Estado actual: Version 1.0
+Se han completado todas las fases iniciales de desarrollo, proporcionando una experiencia funcional y elegante.
 
-## Arquitectura Base
-- **Namespace:** `com.googlelauncher`
-- **Minimum SDK:** 26
-- **Target SDK:** 35
+### Funcionalidades Implementadas:
+- **Pantalla Principal (Home):**
+    - Reloj minimalista de gran formato.
+    - Lista de hasta 8 aplicaciones favoritas.
+    - Acceso rápido a la edición de favoritos.
+- **Cajón de Aplicaciones (App Drawer):**
+    - Acceso mediante deslizamiento vertical (swipe up).
+    - Listado alfabético de todas las aplicaciones instaladas.
+    - **Búsqueda Dinámica:** Filtrado en tiempo real mientras escribes.
+    - **Doble Columna:** Soporte nativo para tablets y dispositivos plegables (foldables).
+- **Personalización y Organización:**
+    - **Renombrar Apps:** Posibilidad de asignar nombres personalizados a cualquier aplicación.
+    - **Carpetas:** Creación y gestión de carpetas en el cajón de aplicaciones.
+    - **Ocultar Apps:** Mantén tu cajón limpio ocultando las apps que no usas frecuentemente (accesibles bajo "Ver más...").
+- **Sistema:**
+    - Configuración como launcher por defecto integrada.
+    - Detección automática de apps desinstaladas para liberar espacios en favoritos.
+
+## Especificaciones Técnicas
+- **Namespace:** `com.etypwwriter.launcher`
+- **Minimum SDK:** 26 (Android 8.0)
+- **Target SDK:** 35 (Android 15)
 - **UI Framework:** Jetpack Compose (Material 3)
+- **Lenguaje:** Kotlin
 
-## Funcionalidades Próximas (Roadmap)
-- [ ] Listado de aplicaciones instaladas.
-- [ ] Integración con servicios de búsqueda de Google.
-- [ ] Personalización estética (Google Material You).
-- [ ] Soporte para gestos.
+---
+*Diseñado para quienes buscan reducir distracciones y apreciar la estética de lo simple.*

@@ -1,4 +1,4 @@
-package com.googlelauncher.ui.theme
+package com.etypwwriter.launcher.ui.theme
 
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -14,7 +14,7 @@ private val DarkColorScheme = darkColorScheme()
 private val LightColorScheme = lightColorScheme()
 
 @Composable
-fun GoogleLauncherTheme(
+fun ETypewriterLauncherTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = true,
     content: @Composable () -> Unit

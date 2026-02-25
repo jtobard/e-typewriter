@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.googlelauncher"
+    namespace = "com.etypwwriter.launcher"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.googlelauncher"
+        applicationId = "com.etypwwriter.launcher"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
@@ -57,4 +57,9 @@ dependencies {
 
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7")
     implementation("androidx.lifecycle:lifecycle-runtime-compose:2.8.7")
+    implementation("androidx.compose.material3:material3-window-size-class")
+    
+    // DataStore for saving preferences
+    implementation("androidx.datastore:datastore-preferences:1.1.1")
+    implementation("androidx.activity:activity-ktx:1.9.3")
 }
