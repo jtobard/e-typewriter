@@ -1,0 +1,7 @@
+# Copia este archivo a key.properties (no lo subas a Git) y rellena los valores.
+# key.properties está en .gitignore.
+
+storeFile=../ruta/a/tu/e-typewriter-release.keystore
+storePassword=TU_PASSWORD_KEYSTORE
+keyAlias=etypewriter
+keyPassword=TU_PASSWORD_KEY

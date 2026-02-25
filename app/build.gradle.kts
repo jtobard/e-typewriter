@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -16,8 +18,25 @@ android {
         versionName = "0.1.0"
     }
 
+    signingConfigs {
+        val keyPropsFile = rootProject.file("key.properties")
+        if (keyPropsFile.exists()) {
+            create("release") {
+                val p = Properties()
+                keyPropsFile.inputStream().use { p.load(it) }
+                storeFile = rootProject.file(p["storeFile"]!! as String)
+                storePassword = p["storePassword"]!! as String
+                keyAlias = p["keyAlias"]!! as String
+                keyPassword = p["keyPassword"]!! as String
+            }
+        }
+    }
+
     buildTypes {
         release {
+            if (rootProject.file("key.properties").exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),

@@ -1,4 +1,4 @@
-# etypwwriter launcher (Version 1.0)
+# e-typewriter launcher (Version 1.0)
 
 <p align="center">
   <img src="images/icon.png" width="200" alt="E-Typewriter Launcher Icon">
@@ -33,6 +33,45 @@ Se han completado todas las fases iniciales de desarrollo, proporcionando una ex
 - **Target SDK:** 35 (Android 15)
 - **UI Framework:** Jetpack Compose (Material 3)
 - **Lenguaje:** Kotlin
+
+## Generar APK para instalar (fuera de la tienda)
+
+Para que cualquiera pueda descargar e instalar el APK (por ejemplo desde GitHub), necesitas un APK **firmado** en modo release.
+
+### 1. Crear un keystore (solo una vez)
+
+En la raíz del proyecto (o en una carpeta que no subas a Git):
+
+```bash
+keytool -genkey -v -keystore e-typewriter-release.keystore -alias etypewriter -keyalg RSA -keysize 2048 -validity 10000
+```
+
+Te pedirá una contraseña y datos (nombre, organización, etc.). **Guarda el keystore y las contraseñas en un lugar seguro**: sin ellos no podrás actualizar la app con la misma firma.
+
+### 2. Configurar la firma
+
+- Copia `key.properties.example` a `key.properties` en la raíz del proyecto.
+- Edita `key.properties` y pon la ruta real al `.keystore`, el alias y las contraseñas.
+
+El archivo `key.properties` no se sube a Git (está en `.gitignore`).
+
+### 3. Generar el APK
+
+```bash
+./gradlew assembleRelease
+```
+
+El APK quedará en:
+
+**`app/build/outputs/apk/release/app-release.apk`**
+
+### 4. Publicar para descarga (ej. GitHub)
+
+- Crea un [Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-your-repository) en el repositorio.
+- En el release, sube el archivo `app-release.apk` como adjunto.
+- Los usuarios descargan el APK, lo instalan y en el móvil deben permitir “Instalar desde fuentes desconocidas” (o “Instalar aplicaciones desconocidas”) para ese navegador o gestor de archivos.
+
+**Importante:** Guarda una copia del `.keystore` y de las contraseñas. Para futuras actualizaciones del mismo app id necesitarás firmar con el mismo keystore.
 
 ## Roadmap
 

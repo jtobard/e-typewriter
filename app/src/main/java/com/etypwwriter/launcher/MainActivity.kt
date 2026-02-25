@@ -73,7 +73,7 @@ class MainActivity : ComponentActivity() {
         ActivityResultContracts.StartActivityForResult()
     ) { result ->
         if (result.resultCode == RESULT_OK) {
-            Toast.makeText(this, "etypwwriter configurado como launcher por defecto", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, "e-typewriter configurado como launcher por defecto", Toast.LENGTH_SHORT).show()
         } else {
             Toast.makeText(this, "No se configuró como launcher por defecto", Toast.LENGTH_SHORT).show()
         }

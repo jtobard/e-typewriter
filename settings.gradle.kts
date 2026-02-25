@@ -21,5 +21,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "etypwwriter-launcher"
+rootProject.name = "e-typewriter-launcher"
 include(":app")
