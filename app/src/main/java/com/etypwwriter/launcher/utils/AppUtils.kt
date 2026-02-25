@@ -6,6 +6,7 @@ import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import android.net.Uri
 
 data class AppItem(
     val packageName: String,
@@ -28,4 +29,12 @@ suspend fun getInstalledApps(context: Context): List<AppItem> = withContext(Disp
             label = it.loadLabel(pm).toString()
         )
     }.sortedBy { it.label.lowercase() }
+}
+
+fun uninstallApp(context: Context, packageName: String) {
+    val intent = Intent(Intent.ACTION_DELETE).apply {
+        data = Uri.parse("package:$packageName")
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+    context.startActivity(intent)
 }

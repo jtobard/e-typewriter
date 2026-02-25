@@ -1,4 +1,9 @@
 # etypwwriter launcher (Version 1.0)
+
+<p align="center">
+  <img src="images/icon.png" width="200" alt="E-Typewriter Launcher Icon">
+</p>
+
 Este es un launcher minimalista para Android con una estética inspirada en las máquinas de escribir, centrado en la tipografía y la simplicidad.
 
 ## Estado actual: Version 1.0
@@ -28,6 +33,19 @@ Se han completado todas las fases iniciales de desarrollo, proporcionando una ex
 - **Target SDK:** 35 (Android 15)
 - **UI Framework:** Jetpack Compose (Material 3)
 - **Lenguaje:** Kotlin
+
+## Roadmap
+
+Importante:
+- Capacidad para desinstalar Apps desde la lista.
+- Sacar de la lista principal las app en carpetas. Pero seguir permitiendo buscarlas con las demas apps.
+
+Deseables:
+- Resumen de notificaciones en la pantalla home.
+- Cambiar el fondo por imagen custom.
+- Letras mas cercanas a una máquina de escribir.
+
+
 
 ---
 *Diseñado para quienes buscan reducir distracciones y apreciar la estética de lo simple.*

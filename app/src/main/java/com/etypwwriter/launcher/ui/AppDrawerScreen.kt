@@ -69,8 +69,11 @@ fun AppDrawerScreen(
         installedApps = getInstalledApps(context)
     }
     
+    val appsInFolders = remember(folders) { folders.values.flatten().toSet() }
+
     val filteredApps = if (searchQuery.isBlank()) {
-        if (showHiddenApps) installedApps else installedApps.filter { !hiddenApps.contains(it.packageName) }
+        val baseApps = if (showHiddenApps) installedApps else installedApps.filter { !hiddenApps.contains(it.packageName) }
+        baseApps.filter { !appsInFolders.contains(it.packageName) }
     } else {
         val baseApps = if (showHiddenApps) installedApps else installedApps.filter { !hiddenApps.contains(it.packageName) }
         baseApps.filter { 

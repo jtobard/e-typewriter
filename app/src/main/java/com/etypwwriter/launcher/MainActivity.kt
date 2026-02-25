@@ -62,6 +62,8 @@ import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSiz
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 
+import com.etypwwriter.launcher.utils.uninstallApp
+
 class MainActivity : ComponentActivity() {
 
     private val favoritesRepository by lazy { FavoritesRepository(applicationContext) }
@@ -158,6 +160,11 @@ fun LauncherScreen(
             onToggleHide = {
                 homeViewModel.toggleHiddenApp(packageName)
                 appToRename = null
+            },
+            onUninstall = {
+                uninstallApp(context, packageName)
+                appToRename = null
+                isDrawerOpen = false
             }
         )
     }

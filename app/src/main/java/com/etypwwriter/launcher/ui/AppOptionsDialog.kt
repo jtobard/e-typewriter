@@ -25,7 +25,8 @@ fun AppOptionsDialog(
     isHidden: Boolean,
     onDismiss: () -> Unit,
     onSave: (String) -> Unit,
-    onToggleHide: () -> Unit
+    onToggleHide: () -> Unit,
+    onUninstall: () -> Unit
 ) {
     var newName by remember { mutableStateOf(initialName) }
 
@@ -53,9 +54,17 @@ fun AppOptionsDialog(
                 Button(
                     onClick = onToggleHide,
                     modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.buttonColors(containerColor = if (isHidden) Color.DarkGray else Color(0xFF8B0000))
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.DarkGray)
                 ) {
                     Text(if (isHidden) "Mostrar App" else "Ocultar App", color = Color.White)
+                }
+                Spacer(modifier = Modifier.height(8.dp))
+                Button(
+                    onClick = onUninstall,
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF8B0000))
+                ) {
+                    Text("Desinstalar App", color = Color.White)
                 }
             }
         },

@@ -62,4 +62,11 @@ dependencies {
     // DataStore for saving preferences
     implementation("androidx.datastore:datastore-preferences:1.1.1")
     implementation("androidx.activity:activity-ktx:1.9.3")
+
+    // Testing
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("io.mockk:mockk:1.13.8")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("app.cash.turbine:turbine:1.0.0")
+    testImplementation("org.robolectric:robolectric:4.11.1")
 }
