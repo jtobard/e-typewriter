@@ -65,6 +65,12 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import com.etypwwriter.launcher.ui.SingleAppPickerScreen
 
+import coil.ImageLoader
+import coil.decode.SvgDecoder
+import coil.Coil
+import coil.compose.AsyncImage
+import com.etypwwriter.launcher.ui.icons.IconPackManager
+
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
@@ -90,6 +96,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        
+        // Initialize Coil globally to support SVGs
+        val imageLoader = ImageLoader.Builder(this)
+            .components {
+                add(SvgDecoder.Factory())
+            }
+            .logger(coil.util.DebugLogger())
+            .build()
+        Coil.setImageLoader(imageLoader)
+
         setContent {
             ETypewriterLauncherTheme {
                 val windowSizeClass = calculateWindowSizeClass(this)
@@ -150,7 +166,9 @@ fun LauncherScreen(
     var isDrawerOpen by remember { mutableStateOf(false) }
     var appToRename by remember { mutableStateOf<String?>(null) }
 
+    val iconPackManager = remember { IconPackManager(context) }
     LaunchedEffect(Unit) {
+        iconPackManager.init()
         while (true) {
             currentTime = SimpleDateFormat("HH:mm", Locale.getDefault()).format(Date())
             delay(1000)
@@ -295,6 +313,7 @@ fun LauncherScreen(
                 BottomShortcutItem(
                     packageName = bottomShortcuts[i],
                     index = i,
+                    iconPackManager = iconPackManager,
                     onClick = { pkg ->
                         if (pkg != null) {
                             val launchResult = launchApp(context, pkg)
@@ -368,23 +387,35 @@ fun launchApp(context: android.content.Context, packageName: String): Unit? {
 fun BottomShortcutItem(
     packageName: String?,
     index: Int,
+    iconPackManager: IconPackManager,
     onClick: (String?) -> Unit,
     onLongClick: () -> Unit
 ) {
     val context = LocalContext.current
-    var iconBitmap by remember(packageName) { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    var iconBytes by remember(packageName) { mutableStateOf<ByteArray?>(null) }
+    var androidIconBitmap by remember(packageName) { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
     
     LaunchedEffect(packageName) {
+        android.util.Log.d("IconPackManager", "LaunchedEffect triggered for bottom shortcut: $packageName")
         if (packageName != null) {
-            try {
-                val pm = context.packageManager
-                val drawable = pm.getApplicationIcon(packageName)
-                iconBitmap = drawable.toBitmap().asImageBitmap()
-            } catch (e: Exception) {
-                iconBitmap = null
+            // Priority 1: Arcticons
+            val bytes = iconPackManager.getIconBytes(packageName)
+            if (bytes != null) {
+                iconBytes = bytes
+            } else {
+                iconBytes = null
+                // Priority 2: System App Icon fallback
+                try {
+                    val pm = context.packageManager
+                    val drawable = pm.getApplicationIcon(packageName)
+                    androidIconBitmap = drawable.toBitmap().asImageBitmap()
+                } catch (e: Exception) {
+                    androidIconBitmap = null
+                }
             }
         } else {
-            iconBitmap = null
+            iconBytes = null
+            androidIconBitmap = null
         }
     }
 
@@ -397,9 +428,15 @@ fun BottomShortcutItem(
             ),
         contentAlignment = Alignment.Center
     ) {
-        if (iconBitmap != null) {
+        if (iconBytes != null) {
+            AsyncImage(
+                model = iconBytes,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else if (androidIconBitmap != null) {
             Image(
-                bitmap = iconBitmap!!,
+                bitmap = androidIconBitmap!!,
                 contentDescription = null,
                 modifier = Modifier.fillMaxSize()
             )

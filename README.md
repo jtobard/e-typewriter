@@ -84,9 +84,6 @@ El APK quedará en:
 
 ## Roadmap
 
-Importante:
-- Capacidad para desinstalar Apps desde la lista.
-- Sacar de la lista principal las app en carpetas. Pero seguir permitiendo buscarlas con las demas apps.
 
 Deseables:
 - Resumen de notificaciones en la pantalla home.
@@ -97,6 +94,11 @@ Deseables:
 
 Este proyecto está licenciado bajo la Licencia Pública General de GNU v3.0 (GPLv3).
 Consulta el archivo [LICENSE](LICENSE) para más detalles.
+
+### Créditos y Agradecimientos
+
+Este proyecto incluye el increíble paquete de iconos **[Arcticons](https://github.com/Donnnno/arcticons)** (estilo White Line), que se utiliza para brindar iconos minimalistas y dinámicos a las aplicaciones de acceso rápido en la pantalla principal.
+Al igual que e-typewriter, Arcticons es un proyecto de código abierto licenciado bajo la **GPLv3**.
 
 ---
 *Diseñado para quienes buscan reducir distracciones y apreciar la estética de lo simple.*
