@@ -4,101 +4,54 @@
   <img src="images/icon.png" width="200" alt="E-Typewriter Launcher Icon">
 </p>
 
-Este es un launcher minimalista para Android con una estética inspirada en las máquinas de escribir, centrado en la tipografía y la simplicidad.
+This is a minimalist Android launcher with a typewriter-inspired aesthetic, focused on typography and simplicity.
 
-## Estado actual: Version 1.0
-Se han completado todas las fases iniciales de desarrollo, proporcionando una experiencia funcional y elegante.
+## Current State: Version 1.0
+All initial development phases have been completed, providing a functional and elegant experience.
 
-### Funcionalidades Implementadas:
-- **Pantalla Principal (Home):**
-    - Reloj minimalista de gran formato.
-    - Lista de hasta 8 aplicaciones favoritas.
-    - Acceso rápido a la edición de favoritos.
-- **Cajón de Aplicaciones (App Drawer):**
-    - Acceso mediante deslizamiento vertical (swipe up).
-    - Listado alfabético de todas las aplicaciones instaladas.
-    - **Búsqueda Dinámica:** Filtrado en tiempo real mientras escribes.
-    - **Doble Columna:** Soporte nativo para tablets y dispositivos plegables (foldables).
-- **Personalización y Organización:**
-    - **Renombrar Apps:** Posibilidad de asignar nombres personalizados a cualquier aplicación.
-    - **Carpetas:** Creación y gestión de carpetas en el cajón de aplicaciones.
-    - **Ocultar Apps:** Mantén tu cajón limpio ocultando las apps que no usas frecuentemente (accesibles bajo "Ver más...").
-- **Sistema:**
-    - Configuración como launcher por defecto integrada.
-    - Detección automática de apps desinstaladas para liberar espacios en favoritos.
+### Implemented Features:
+- **Home Screen:**
+    - Large-format minimalist clock.
+    - List of up to 8 favorite applications.
+    - Quick access to favorite editing.
+- **App Drawer:**
+    - Access via vertical swipe (swipe up).
+    - Alphabetical list of all installed applications.
+    - **Dynamic Search:** Real-time filtering as you type.
+    - **Double Column:** Native support for tablets and foldable devices.
+- **Customization and Organization:**
+    - **Rename Apps:** Ability to assign custom names to any application.
+    - **Folders:** Create and manage folders in the app drawer.
+    - **Hide Apps:** Keep your drawer clean by hiding apps you don't use frequently (accessible under "See more...").
+- **System:**
+    - Integrated default launcher configuration.
+    - Automatic detection of uninstalled apps to free up favorite slots.
 
-## Especificaciones Técnicas
+## Technical Specifications
 - **Namespace:** `com.etypwwriter.launcher`
 - **Minimum SDK:** 26 (Android 8.0)
 - **Target SDK:** 35 (Android 15)
 - **UI Framework:** Jetpack Compose (Material 3)
-- **Lenguaje:** Kotlin
+- **Language:** Kotlin
 
-## Generar APK para instalar (fuera de la tienda)
-
-Para que cualquiera pueda descargar e instalar el APK (por ejemplo desde GitHub), necesitas un APK **firmado** en modo release.
-
-### 1. Crear un keystore (solo una vez)
-
-En la raíz del proyecto (o en una carpeta que no subas a Git):
-
-```bash
-keytool -genkey -v -keystore e-typewriter-release.keystore -alias etypewriter -keyalg RSA -keysize 2048 -validity 10000
-```
-
-Te pedirá una contraseña y datos (nombre, organización, etc.). **Guarda el keystore y las contraseñas en un lugar seguro**: sin ellos no podrás actualizar la app con la misma firma.
-
-### 2. Configurar la firma
-
-- Copia `key.properties.example` a `key.properties` en la raíz del proyecto.
-- Edita `key.properties` y pon la ruta real al `.keystore`, el alias y las contraseñas.
-
-El archivo `key.properties` no se sube a Git (está en `.gitignore`).
-
-### 3. Generar el APK
-
-```bash
-./gradlew assembleRelease
-```
-
-El APK quedará en:
-
-**`app/build/outputs/apk/release/app-release.apk`**
-
-### 4. Publicar para descarga (ej. GitHub)
-
-- Crea un [Release](https://docs.github.com/en/repositories/releasing-projects-on-github/managing-releases-in-your-repository) en el repositorio.
-- En el release, sube el archivo `app-release.apk` como adjunto.
-- Los usuarios descargan el APK, lo instalan y en el móvil deben permitir “Instalar desde fuentes desconocidas” (o “Instalar aplicaciones desconocidas”) para ese navegador o gestor de archivos.
-
-**Importante:** Guarda una copia del `.keystore` y de las contraseñas. Para futuras actualizaciones del mismo app id necesitarás firmar con el mismo keystore.
-
-### Si en el dispositivo dice "No se ha podido analizar el paquete" (ej. Onyx Boox)
-
-- **Comprueba que el APK no esté corrupto:** el archivo puede haberse cortado al descargar o copiar. Compara el tamaño del archivo con el original; mejor aún, pasa el APK por USB en lugar de descargarlo por el navegador del dispositivo.
-- **Prueba un APK con targetSdk 30** (más compatible con instaladores de algunos fabricantes):
-  ```bash
-  ./gradlew assembleRelease -PbooxCompatible=true
-  ```
-  El APK sigue en `app/build/outputs/apk/release/app-release.apk`. Instala ese en el Boox.
 
 ## Roadmap
 
 
-Deseables:
-- Resumen de notificaciones en la pantalla home.
-- Cambiar el fondo por imagen custom.
-- Letras mas cercanas a una máquina de escribir.
+Desirables:
+- Notification summary on the home screen.
+- Change background to a custom image.
+- Fonts closer to a typewriter.
 
-## Licencia
+## License
 
-Este proyecto está licenciado bajo la Licencia Pública General de GNU v3.0 (GPLv3).
-Consulta el archivo [LICENSE](LICENSE) para más detalles.
+This project is licensed under the GNU General Public License v3.0 (GPLv3).
+See the [LICENSE](LICENSE) file for more details.
 
-### Créditos y Agradecimientos
+### Credits and Acknowledgments
 
-Este proyecto incluye el increíble paquete de iconos **[Arcticons](https://github.com/Donnnno/arcticons)** (estilo White Line), que se utiliza para brindar iconos minimalistas y dinámicos a las aplicaciones de acceso rápido en la pantalla principal.
-Al igual que e-typewriter, Arcticons es un proyecto de código abierto licenciado bajo la **GPLv3**.
+This project includes the amazing **[Arcticons](https://github.com/Donnnno/arcticons)** icon pack (White Line style), which is used to provide minimalist and dynamic icons for the quick access apps on the home screen.
+Like e-typewriter, Arcticons is an open-source project licensed under the **GPLv3**.
 
 ---
-*Diseñado para quienes buscan reducir distracciones y apreciar la estética de lo simple.*
+*Designed for those looking to reduce distractions and appreciate the aesthetics of simplicity.*
