@@ -13,6 +13,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.Image
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -57,6 +61,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
+import com.etypwwriter.launcher.ui.SingleAppPickerScreen
 
 import androidx.compose.material3.windowsizeclass.ExperimentalMaterial3WindowSizeClassApi
 import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
@@ -137,6 +144,8 @@ fun LauncherScreen(
     val customNames by homeViewModel.customNames.collectAsStateWithLifecycle()
     val folders by homeViewModel.folders.collectAsStateWithLifecycle()
     val hiddenApps by homeViewModel.hiddenApps.collectAsStateWithLifecycle()
+    val bottomShortcuts by homeViewModel.bottomShortcuts.collectAsStateWithLifecycle()
+    var appPickerSlot by remember { mutableStateOf<Int?>(null) }
     var isEditingFavorites by remember { mutableStateOf(false) }
     var isDrawerOpen by remember { mutableStateOf(false) }
     var appToRename by remember { mutableStateOf<String?>(null) }
@@ -201,8 +210,18 @@ fun LauncherScreen(
             },
             modifier = modifier
         )
+    } else if (appPickerSlot != null) {
+        SingleAppPickerScreen(
+            title = "Elegir aplicación",
+            onAppSelected = { packageName ->
+                homeViewModel.saveBottomShortcut(appPickerSlot!!, packageName)
+                appPickerSlot = null
+            },
+            onCancel = { appPickerSlot = null },
+            modifier = modifier
+        )
     } else {
-        Column(
+        Box(
             modifier = modifier
                 .fillMaxSize()
                 .background(Color.Black)
@@ -213,10 +232,14 @@ fun LauncherScreen(
                         }
                     }
                 }
-                .padding(horizontal = 40.dp, vertical = 60.dp),
-            horizontalAlignment = Alignment.Start,
-            verticalArrangement = Arrangement.Top
         ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 40.dp, vertical = 60.dp),
+                horizontalAlignment = Alignment.Start,
+                verticalArrangement = Arrangement.Top
+            ) {
             // Reloj
             Text(
                 text = currentTime,
@@ -232,7 +255,7 @@ fun LauncherScreen(
             Spacer(modifier = Modifier.height(20.dp))
 
             // Botón editar
-            androidx.compose.foundation.layout.Row(
+            Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End
             ) {
@@ -259,7 +282,37 @@ fun LauncherScreen(
                 }
             }
         }
+        
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(bottom = 5.dp),
+            horizontalArrangement = Arrangement.SpaceEvenly,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            for (i in 0..2) {
+                BottomShortcutItem(
+                    packageName = bottomShortcuts[i],
+                    index = i,
+                    onClick = { pkg ->
+                        if (pkg != null) {
+                            val launchResult = launchApp(context, pkg)
+                            if (launchResult == null) {
+                                appPickerSlot = i
+                            }
+                        } else {
+                            appPickerSlot = i
+                        }
+                    },
+                    onLongClick = {
+                        appPickerSlot = i
+                    }
+                )
+            }
+        }
     }
+}
 }
 
 
@@ -307,6 +360,61 @@ fun launchApp(context: android.content.Context, packageName: String): Unit? {
         }
     } catch (e: Exception) {
         null
+    }
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+fun BottomShortcutItem(
+    packageName: String?,
+    index: Int,
+    onClick: (String?) -> Unit,
+    onLongClick: () -> Unit
+) {
+    val context = LocalContext.current
+    var iconBitmap by remember(packageName) { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+    
+    LaunchedEffect(packageName) {
+        if (packageName != null) {
+            try {
+                val pm = context.packageManager
+                val drawable = pm.getApplicationIcon(packageName)
+                iconBitmap = drawable.toBitmap().asImageBitmap()
+            } catch (e: Exception) {
+                iconBitmap = null
+            }
+        } else {
+            iconBitmap = null
+        }
+    }
+
+    Box(
+        modifier = Modifier
+            .size(48.dp)
+            .combinedClickable(
+                onClick = { onClick(packageName) },
+                onLongClick = onLongClick
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        if (iconBitmap != null) {
+            Image(
+                bitmap = iconBitmap!!,
+                contentDescription = null,
+                modifier = Modifier.fillMaxSize()
+            )
+        } else {
+            val emoji = when (index) {
+                0 -> "📞"
+                1 -> "💬"
+                2 -> "📷"
+                else -> "❓"
+            }
+            Text(
+                text = emoji,
+                fontSize = 32.sp
+            )
+        }
     }
 }
 

@@ -19,6 +19,7 @@ class FavoritesRepository(private val context: Context) {
     private val favoritesKey = stringSetPreferencesKey("favorite_apps")
     private val customNamesKey = stringPreferencesKey("custom_app_names")
     private val hiddenAppsKey = stringSetPreferencesKey("hidden_apps")
+    private val bottomShortcutsKey = stringPreferencesKey("bottom_shortcuts")
 
     val favoritesFlow: Flow<Set<String>> = context.dataStore.data.map { preferences ->
         preferences[favoritesKey] ?: emptySet()
@@ -37,6 +38,36 @@ class FavoritesRepository(private val context: Context) {
     suspend fun saveHiddenApps(hiddenApps: Set<String>) {
         context.dataStore.edit { preferences ->
             preferences[hiddenAppsKey] = hiddenApps
+        }
+    }
+
+    val bottomShortcutsFlow: Flow<Map<Int, String>?> = context.dataStore.data.map { preferences ->
+        if (!preferences.contains(bottomShortcutsKey)) {
+            null
+        } else {
+            val jsonString = preferences[bottomShortcutsKey] ?: "{}"
+            try {
+                val jsonObject = JSONObject(jsonString)
+                val map = mutableMapOf<Int, String>()
+                val keys = jsonObject.keys()
+                while (keys.hasNext()) {
+                    val key = keys.next()
+                    map[key.toInt()] = jsonObject.getString(key)
+                }
+                map
+            } catch (e: Exception) {
+                emptyMap()
+            }
+        }
+    }
+
+    suspend fun saveBottomShortcuts(shortcuts: Map<Int, String>) {
+        context.dataStore.edit { preferences ->
+            val jsonObject = JSONObject()
+            shortcuts.forEach { (index, pkg) ->
+                jsonObject.put(index.toString(), pkg)
+            }
+            preferences[bottomShortcutsKey] = jsonObject.toString()
         }
     }
 

@@ -64,6 +64,7 @@ fun AppDrawerScreen(
     var folderToEdit by remember { mutableStateOf<String?>(null) }
     var expandedFolders by remember { mutableStateOf<Set<String>>(emptySet()) }
     var showHiddenApps by remember { mutableStateOf(false) }
+    var showAboutDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         installedApps = getInstalledApps(context)
@@ -103,6 +104,38 @@ fun AppDrawerScreen(
                 }
                 showFolderEditDialog = false
             }
+        )
+    }
+
+    if (showAboutDialog) {
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showAboutDialog = false },
+            title = {
+                Text("Acerca de e-typewriter", color = Color.White, fontWeight = FontWeight.Bold)
+            },
+            text = {
+                Column {
+                    Text("Versión 1.0", color = Color.LightGray)
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Este proyecto es Software Libre y está licenciado bajo la GNU General Public License v3.0 (GPLv3).",
+                        color = Color.White,
+                        fontSize = 14.sp
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        "Código fuente disponible en GitHub.",
+                        color = Color.LightGray,
+                        fontSize = 14.sp
+                    )
+                }
+            },
+            confirmButton = {
+                androidx.compose.material3.TextButton(onClick = { showAboutDialog = false }) {
+                    Text("Cerrar", color = Color.White)
+                }
+            },
+            containerColor = Color.DarkGray
         )
     }
 
@@ -238,6 +271,20 @@ fun AppDrawerScreen(
                         Text(if (showHiddenApps) "Ocultar apps" else "Ver más...", color = Color.White)
                     }
                 }
+            }
+
+            item(span = { GridItemSpan(maxLineSpan) }) {
+                Spacer(modifier = Modifier.height(32.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { showAboutDialog = true }
+                        .padding(vertical = 16.dp, horizontal = 16.dp),
+                    horizontalArrangement = androidx.compose.foundation.layout.Arrangement.Center
+                ) {
+                    Text("Acerca de / Licencia...", color = Color.Gray, fontSize = 16.sp)
+                }
+                Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }

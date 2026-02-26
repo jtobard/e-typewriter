@@ -23,7 +23,24 @@ class HomeViewModel(private val repository: FavoritesRepository) : ViewModel() {
     private val _hiddenApps = MutableStateFlow<Set<String>>(emptySet())
     val hiddenApps: StateFlow<Set<String>> = _hiddenApps.asStateFlow()
 
+    private val _bottomShortcuts = MutableStateFlow<Map<Int, String>>(emptyMap())
+    val bottomShortcuts: StateFlow<Map<Int, String>> = _bottomShortcuts.asStateFlow()
+
     init {
+        viewModelScope.launch {
+            repository.bottomShortcutsFlow.collect { shortcuts ->
+                if (shortcuts == null) {
+                    val defaults = mapOf(
+                        0 to "com.android.dialer",
+                        1 to "com.whatsapp",
+                        2 to "com.android.camera2"
+                    )
+                    repository.saveBottomShortcuts(defaults)
+                } else {
+                    _bottomShortcuts.value = shortcuts
+                }
+            }
+        }
         viewModelScope.launch {
             repository.favoritesFlow.collect { favorites ->
                 // If it's the first run, let's put some defaults
@@ -99,6 +116,12 @@ class HomeViewModel(private val repository: FavoritesRepository) : ViewModel() {
             newHiddenApps.add(packageName)
         }
         viewModelScope.launch { repository.saveHiddenApps(newHiddenApps) }
+    }
+
+    fun saveBottomShortcut(index: Int, packageName: String) {
+        val currentShortcuts = _bottomShortcuts.value.toMutableMap()
+        currentShortcuts[index] = packageName
+        viewModelScope.launch { repository.saveBottomShortcuts(currentShortcuts) }
     }
 }
 

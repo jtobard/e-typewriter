@@ -93,7 +93,10 @@ Deseables:
 - Cambiar el fondo por imagen custom.
 - Letras mas cercanas a una máquina de escribir.
 
+## Licencia
 
+Este proyecto está licenciado bajo la Licencia Pública General de GNU v3.0 (GPLv3).
+Consulta el archivo [LICENSE](LICENSE) para más detalles.
 
 ---
 *Diseñado para quienes buscan reducir distracciones y apreciar la estética de lo simple.*
