@@ -212,6 +212,7 @@ fun LauncherScreen(
             folders = folders,
             hiddenApps = hiddenApps,
             windowWidthSizeClass = windowWidthSizeClass,
+            iconPackManager = iconPackManager,
             onClose = { isDrawerOpen = false },
             onAppSelected = { packageName ->
                 launchApp(context, packageName)
@@ -293,7 +294,9 @@ fun LauncherScreen(
                 val appName = getAppName(context, packageName, customNames)
                 if (appName != null) {
                     AppShortcut(
+                        packageName = packageName,
                         name = appName,
+                        iconPackManager = iconPackManager,
                         onClick = { launchApp(context, packageName) },
                         onLongClick = { appToRename = packageName }
                     )
@@ -337,19 +340,47 @@ fun LauncherScreen(
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
-fun AppShortcut(name: String, onClick: () -> Unit, onLongClick: () -> Unit = {}) {
-    Text(
-        text = name,
-        color = Color.Gray,
-        fontSize = 20.sp,
+fun AppShortcut(
+    packageName: String,
+    name: String,
+    iconPackManager: IconPackManager,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit = {}
+) {
+    var iconBytes by remember(packageName) { mutableStateOf<ByteArray?>(null) }
+
+    LaunchedEffect(packageName) {
+        val bytes = iconPackManager.getIconBytes(packageName)
+        if (bytes != null) {
+            iconBytes = bytes
+        }
+    }
+
+    Row(
         modifier = Modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,
                 onLongClick = onLongClick
             )
-            .padding(vertical = 12.dp)
-    )
+            .padding(vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        if (iconBytes != null) {
+            AsyncImage(
+                model = iconBytes,
+                contentDescription = null,
+                modifier = Modifier
+                    .size(24.dp)
+                    .padding(end = 8.dp)
+            )
+        }
+        Text(
+            text = name,
+            color = Color.Gray,
+            fontSize = 20.sp,
+        )
+    }
 }
 
 fun getAppName(context: Context, packageName: String, customNames: Map<String, String> = emptyMap()): String? {

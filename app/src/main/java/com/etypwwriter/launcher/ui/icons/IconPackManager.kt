@@ -3,6 +3,8 @@ package com.etypwwriter.launcher.ui.icons
 import android.content.Context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import java.io.File
 import java.io.FileOutputStream
 import java.util.zip.ZipFile
@@ -11,14 +13,17 @@ class IconPackManager(private val context: Context) {
 
     private val packageMap = mutableMapOf<String, String>()
     private var isInitialized = false
+    private val mutex = Mutex()
     private var zipFile: java.util.zip.ZipFile? = null
     private var cacheZip: File? = null
 
     suspend fun init() {
         if (isInitialized) return
-        withContext(Dispatchers.IO) {
-            android.util.Log.d("IconPackManager", "Starting IconPackManager init")
-            cacheZip = File(context.cacheDir, "arcticons.zip")
+        mutex.withLock {
+            if (isInitialized) return
+            withContext(Dispatchers.IO) {
+                android.util.Log.d("IconPackManager", "Starting IconPackManager init")
+                cacheZip = File(context.cacheDir, "arcticons.zip")
             
             val extractFromAssets = {
                 val tempFile = File(context.cacheDir, "arcticons.zip.tmp")
@@ -28,7 +33,7 @@ class IconPackManager(private val context: Context) {
                     }
                 }
                 if (cacheZip!!.exists()) cacheZip!!.delete()
-                tempFile.renameTo(cacheZip)
+                tempFile.renameTo(cacheZip!!)
                 android.util.Log.d("IconPackManager", "Extracted zip to cache")
             }
 
@@ -56,6 +61,7 @@ class IconPackManager(private val context: Context) {
             
             isInitialized = true
             android.util.Log.d("IconPackManager", "IconPackManager initialized successfully")
+        }
         }
     }
 
@@ -112,6 +118,25 @@ class IconPackManager(private val context: Context) {
                 bytes
             } else {
                 android.util.Log.d("IconPackManager", "SVG file not found for $packageName at white/$cleanDrawableName.svg")
+                null
+            }
+        }
+    }
+
+    suspend fun getIconForFolder(folderName: String): ByteArray? {
+        if (!isInitialized) init()
+        
+        return withContext(Dispatchers.IO) {
+            val specificName = "folder_${folderName.lowercase().replace(" ", "_").replace("-", "_")}"
+            var svgEntry = zipFile?.getEntry("white/$specificName.svg")
+            
+            if (svgEntry == null) {
+                svgEntry = zipFile?.getEntry("white/file_folder.svg")
+            }
+            
+            if (svgEntry != null) {
+                zipFile?.getInputStream(svgEntry)?.use { it.readBytes() }
+            } else {
                 null
             }
         }

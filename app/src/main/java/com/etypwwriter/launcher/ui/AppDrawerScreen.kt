@@ -41,6 +41,9 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.material.icons.filled.Add
 
 import androidx.compose.foundation.lazy.grid.GridItemSpan
+import coil.compose.AsyncImage
+import androidx.compose.foundation.layout.size
+import com.etypwwriter.launcher.ui.icons.IconPackManager
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -49,6 +52,7 @@ fun AppDrawerScreen(
     folders: Map<String, Set<String>>,
     hiddenApps: Set<String>,
     windowWidthSizeClass: WindowWidthSizeClass,
+    iconPackManager: IconPackManager,
     onClose: () -> Unit,
     onAppSelected: (String) -> Unit,
     onAppLongPressed: (String) -> Unit,
@@ -200,6 +204,11 @@ fun AppDrawerScreen(
             if (searchQuery.isBlank()) {
                 folders.entries.sortedBy { it.key.lowercase() }.forEach { (folderName, apps) ->
                     item {
+                        var folderIconBytes by remember(folderName) { mutableStateOf<ByteArray?>(null) }
+                        LaunchedEffect(folderName) {
+                            folderIconBytes = iconPackManager.getIconForFolder(folderName)
+                        }
+                        
                         val isExpanded = expandedFolders.contains(folderName)
                         Row(
                             modifier = Modifier
@@ -216,13 +225,28 @@ fun AppDrawerScreen(
                                 .padding(vertical = 12.dp, horizontal = 12.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Text(
-                                text = "📁 $folderName",
-                                color = Color.White,
-                                fontSize = 20.sp,
-                                fontWeight = FontWeight.Bold,
-                                modifier = Modifier.weight(1f)
-                            )
+                            if (folderIconBytes != null) {
+                                AsyncImage(
+                                    model = folderIconBytes,
+                                    contentDescription = "Carpeta",
+                                    modifier = Modifier.size(24.dp).padding(end = 8.dp)
+                                )
+                                Text(
+                                    text = folderName,
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            } else {
+                                Text(
+                                    text = "📁 $folderName",
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
                         }
                     }
 
