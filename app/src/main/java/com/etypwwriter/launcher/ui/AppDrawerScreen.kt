@@ -2,6 +2,7 @@ package com.etypwwriter.launcher.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -47,6 +48,11 @@ import com.etypwwriter.launcher.ui.icons.IconPackManager
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.foundation.Image
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -272,17 +278,15 @@ fun AppDrawerScreen(
                     if (expandedFolders.contains(folderName)) {
                         val folderApps = installedApps.filter { apps.contains(it.packageName) }.sortedBy { (customNames[it.packageName] ?: it.label).lowercase() }
                         items(folderApps) { app ->
-                            Text(
-                                text = "  ↳ ${customNames[app.packageName] ?: app.label}",
-                                color = Color.LightGray,
-                                fontSize = 18.sp,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .combinedClickable(
-                                        onClick = { onAppSelected(app.packageName) },
-                                        onLongClick = { onAppLongPressed(app.packageName) }
-                                    )
-                                    .padding(vertical = 8.dp, horizontal = 32.dp)
+                            AppDrawerListItem(
+                                app = app,
+                                customNames = customNames,
+                                iconPackManager = iconPackManager,
+                                onClick = { onAppSelected(app.packageName) },
+                                onLongClick = { onAppLongPressed(app.packageName) },
+                                textColor = Color.LightGray,
+                                prefix = "  ↳ ",
+                                modifier = Modifier.padding(vertical = 8.dp, horizontal = 32.dp)
                             )
                         }
                     }
@@ -290,17 +294,13 @@ fun AppDrawerScreen(
             }
 
             items(filteredApps) { app ->
-                Text(
-                    text = customNames[app.packageName] ?: app.label,
-                    color = Color.White,
-                    fontSize = 18.sp,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .combinedClickable(
-                            onClick = { onAppSelected(app.packageName) },
-                            onLongClick = { onAppLongPressed(app.packageName) }
-                        )
-                        .padding(vertical = 12.dp, horizontal = 12.dp)
+                AppDrawerListItem(
+                    app = app,
+                    customNames = customNames,
+                    iconPackManager = iconPackManager,
+                    onClick = { onAppSelected(app.packageName) },
+                    onLongClick = { onAppLongPressed(app.packageName) },
+                    modifier = Modifier.padding(vertical = 12.dp, horizontal = 12.dp)
                 )
             }
 
@@ -330,5 +330,68 @@ fun AppDrawerScreen(
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
+    }
+}
+
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+@Composable
+private fun AppDrawerListItem(
+    app: AppItem,
+    customNames: Map<String, String>,
+    iconPackManager: IconPackManager,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    textColor: Color = Color.White,
+    fontSize: androidx.compose.ui.unit.TextUnit = 18.sp,
+    prefix: String = "",
+    modifier: Modifier = Modifier
+) {
+    val context = LocalContext.current
+    var iconBytes by remember(app.packageName) { mutableStateOf<ByteArray?>(null) }
+    var systemIconBitmap by remember(app.packageName) { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
+
+    LaunchedEffect(app.packageName) {
+        val bytes = iconPackManager.getIconBytes(app.packageName)
+        if (bytes != null) {
+            iconBytes = bytes
+        } else {
+            systemIconBitmap = withContext(Dispatchers.IO) {
+                try {
+                    val drawable = context.packageManager.getApplicationIcon(app.packageName)
+                    drawable.toBitmap().asImageBitmap()
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        }
+    }
+
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .combinedClickable(onClick = onClick, onLongClick = onLongClick),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(modifier = Modifier.size(24.dp).padding(end = 8.dp)) {
+            if (iconBytes != null) {
+                AsyncImage(
+                    model = iconBytes,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            } else if (systemIconBitmap != null) {
+                Image(
+                    bitmap = systemIconBitmap!!,
+                    contentDescription = null,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+        }
+        Text(
+            text = "$prefix${customNames[app.packageName] ?: app.label}",
+            color = textColor,
+            fontSize = fontSize,
+            modifier = Modifier.weight(1f)
+        )
     }
 }
