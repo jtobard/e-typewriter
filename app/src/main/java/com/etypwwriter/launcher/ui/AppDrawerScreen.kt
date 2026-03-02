@@ -44,6 +44,9 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import coil.compose.AsyncImage
 import androidx.compose.foundation.layout.size
 import com.etypwwriter.launcher.ui.icons.IconPackManager
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import kotlinx.coroutines.delay
 
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
@@ -53,6 +56,7 @@ fun AppDrawerScreen(
     hiddenApps: Set<String>,
     windowWidthSizeClass: WindowWidthSizeClass,
     iconPackManager: IconPackManager,
+    focusSearchOnOpen: Boolean = false,
     onClose: () -> Unit,
     onAppSelected: (String) -> Unit,
     onAppLongPressed: (String) -> Unit,
@@ -64,6 +68,7 @@ fun AppDrawerScreen(
     var installedApps by remember { mutableStateOf<List<AppItem>>(emptyList()) }
     var searchQuery by remember { mutableStateOf("") }
     
+    val searchFocusRequester = remember { FocusRequester() }
     var showFolderEditDialog by remember { mutableStateOf(false) }
     var folderToEdit by remember { mutableStateOf<String?>(null) }
     var expandedFolders by remember { mutableStateOf<Set<String>>(emptySet()) }
@@ -72,6 +77,13 @@ fun AppDrawerScreen(
 
     LaunchedEffect(Unit) {
         installedApps = getInstalledApps(context)
+    }
+
+    LaunchedEffect(focusSearchOnOpen) {
+        if (focusSearchOnOpen) {
+            delay(100) // Pequeña pausa para que el TextField esté listo
+            searchFocusRequester.requestFocus()
+        }
     }
     
     val appsInFolders = remember(folders) { folders.values.flatten().toSet() }
@@ -90,11 +102,16 @@ fun AppDrawerScreen(
     if (showFolderEditDialog) {
         val initialName = folderToEdit ?: ""
         val initialApps = folderToEdit?.let { folders[it] } ?: emptySet()
+        val appsInOtherFolders = remember(folders, folderToEdit, initialApps) {
+            folders.values.flatten().toSet() - initialApps
+        }
         FolderEditDialog(
             initialName = initialName,
             initialApps = initialApps,
             installedApps = installedApps,
             customNames = customNames,
+            hiddenApps = hiddenApps,
+            appsInOtherFolders = appsInOtherFolders,
             onDismiss = { showFolderEditDialog = false },
             onSave = { name, apps ->
                 val oldName = folderToEdit
@@ -177,7 +194,9 @@ fun AppDrawerScreen(
         OutlinedTextField(
             value = searchQuery,
             onValueChange = { searchQuery = it },
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(searchFocusRequester),
             placeholder = { Text("Buscar...", color = Color.Gray) },
             singleLine = true,
             colors = TextFieldDefaults.colors(

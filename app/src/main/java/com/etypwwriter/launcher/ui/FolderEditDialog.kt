@@ -38,11 +38,19 @@ fun FolderEditDialog(
     initialApps: Set<String> = emptySet(),
     installedApps: List<AppItem>,
     customNames: Map<String, String>,
+    hiddenApps: Set<String> = emptySet(),
+    appsInOtherFolders: Set<String> = emptySet(),
     onDismiss: () -> Unit,
     onSave: (String, Set<String>) -> Unit
 ) {
     var folderName by remember { mutableStateOf(initialName) }
     var selectedApps by remember { mutableStateOf(initialApps) }
+
+    val availableApps = remember(installedApps, hiddenApps, appsInOtherFolders) {
+        installedApps.filter {
+            !hiddenApps.contains(it.packageName) && !appsInOtherFolders.contains(it.packageName)
+        }
+    }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -71,7 +79,7 @@ fun FolderEditDialog(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 LazyColumn(modifier = Modifier.weight(1f)) {
-                    items(installedApps) { app ->
+                    items(availableApps) { app ->
                         val isSelected = selectedApps.contains(app.packageName)
                         Row(
                             modifier = Modifier

@@ -164,6 +164,7 @@ fun LauncherScreen(
     var appPickerSlot by remember { mutableStateOf<Int?>(null) }
     var isEditingFavorites by remember { mutableStateOf(false) }
     var isDrawerOpen by remember { mutableStateOf(false) }
+    var focusSearchOnOpen by remember { mutableStateOf(false) }
     var appToRename by remember { mutableStateOf<String?>(null) }
 
     val iconPackManager = remember { IconPackManager(context) }
@@ -213,6 +214,7 @@ fun LauncherScreen(
             hiddenApps = hiddenApps,
             windowWidthSizeClass = windowWidthSizeClass,
             iconPackManager = iconPackManager,
+            focusSearchOnOpen = focusSearchOnOpen,
             onClose = { isDrawerOpen = false },
             onAppSelected = { packageName ->
                 launchApp(context, packageName)
@@ -244,9 +246,10 @@ fun LauncherScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .pointerInput(Unit) {
+                .                pointerInput(Unit) {
                     detectVerticalDragGestures { _, dragAmount ->
                         if (dragAmount < -20) { // Swipe up
+                            focusSearchOnOpen = false
                             isDrawerOpen = true
                         }
                     }
@@ -268,9 +271,20 @@ fun LauncherScreen(
             )
 
             Spacer(modifier = Modifier.height(40.dp))
-            
-            HorizontalDivider(color = Color.DarkGray, thickness = 0.5.dp)
-            
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(60.dp)
+                    .clickable {
+                        focusSearchOnOpen = true
+                        isDrawerOpen = true
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                HorizontalDivider(color = Color.DarkGray, thickness = 0.5.dp)
+            }
+
             Spacer(modifier = Modifier.height(20.dp))
 
             // Botón editar
