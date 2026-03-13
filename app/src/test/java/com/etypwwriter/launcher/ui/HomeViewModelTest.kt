@@ -24,6 +24,7 @@ class HomeViewModelTest {
         coEvery { repository.customNamesFlow } returns MutableStateFlow(emptyMap())
         coEvery { repository.foldersFlow } returns MutableStateFlow(emptyMap())
         coEvery { repository.hiddenAppsFlow } returns MutableStateFlow(emptySet())
+        coEvery { repository.bottomShortcutsFlow } returns MutableStateFlow(null)
 
         val viewModel = HomeViewModel(repository)
 
@@ -44,6 +45,7 @@ class HomeViewModelTest {
         coEvery { repository.customNamesFlow } returns MutableStateFlow(emptyMap())
         coEvery { repository.foldersFlow } returns MutableStateFlow(emptyMap())
         coEvery { repository.hiddenAppsFlow } returns MutableStateFlow(emptySet())
+        coEvery { repository.bottomShortcutsFlow } returns MutableStateFlow(emptyMap())
 
         coEvery { repository.saveFavorites(any()) } answers {
             favoritesFlow.value = firstArg()
@@ -66,6 +68,7 @@ class HomeViewModelTest {
         coEvery { repository.customNamesFlow } returns MutableStateFlow(emptyMap())
         coEvery { repository.foldersFlow } returns MutableStateFlow(emptyMap())
         coEvery { repository.hiddenAppsFlow } returns MutableStateFlow(emptySet())
+        coEvery { repository.bottomShortcutsFlow } returns MutableStateFlow(emptyMap())
 
         coEvery { repository.saveFavorites(any()) } answers {
             favoritesFlow.value = firstArg()

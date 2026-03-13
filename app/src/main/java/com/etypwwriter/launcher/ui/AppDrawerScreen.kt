@@ -34,6 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.etypwwriter.launcher.utils.AppItem
 import com.etypwwriter.launcher.utils.getInstalledApps
+import com.etypwwriter.launcher.utils.updateInstalledAppsCache
 
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextFieldDefaults
@@ -83,6 +84,10 @@ fun AppDrawerScreen(
 
     LaunchedEffect(Unit) {
         installedApps = getInstalledApps(context)
+        val updatedApps = updateInstalledAppsCache(context)
+        if (updatedApps != null) {
+            installedApps = updatedApps
+        }
     }
 
     LaunchedEffect(focusSearchOnOpen) {
@@ -142,7 +147,7 @@ fun AppDrawerScreen(
             },
             text = {
                 Column {
-                    Text("Versión 1.0", color = Color.LightGray)
+                    Text("Versión ${com.etypwwriter.launcher.BuildConfig.VERSION_NAME}", color = Color.LightGray)
                     Spacer(modifier = Modifier.height(8.dp))
                     Text(
                         "Este proyecto es Software Libre y está licenciado bajo la GNU General Public License v3.0 (GPLv3).",
@@ -253,7 +258,7 @@ fun AppDrawerScreen(
                             if (folderIconBytes != null) {
                                 AsyncImage(
                                     model = folderIconBytes,
-                                    contentDescription = "Carpeta",
+                                    contentDescription = "Carpeta $folderName",
                                     modifier = Modifier.size(24.dp).padding(end = 8.dp)
                                 )
                                 Text(
@@ -264,8 +269,9 @@ fun AppDrawerScreen(
                                     modifier = Modifier.weight(1f)
                                 )
                             } else {
+                                Box(modifier = Modifier.size(24.dp).padding(end = 8.dp))
                                 Text(
-                                    text = "📁 $folderName",
+                                    text = folderName,
                                     color = Color.White,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
@@ -366,6 +372,8 @@ private fun AppDrawerListItem(
         }
     }
 
+    val displayName = customNames[app.packageName] ?: app.label
+
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -376,19 +384,19 @@ private fun AppDrawerListItem(
             if (iconBytes != null) {
                 AsyncImage(
                     model = iconBytes,
-                    contentDescription = null,
+                    contentDescription = displayName,
                     modifier = Modifier.size(24.dp)
                 )
             } else if (systemIconBitmap != null) {
                 Image(
                     bitmap = systemIconBitmap!!,
-                    contentDescription = null,
+                    contentDescription = displayName,
                     modifier = Modifier.size(24.dp)
                 )
             }
         }
         Text(
-            text = "$prefix${customNames[app.packageName] ?: app.label}",
+            text = "$prefix$displayName",
             color = textColor,
             fontSize = fontSize,
             modifier = Modifier.weight(1f)

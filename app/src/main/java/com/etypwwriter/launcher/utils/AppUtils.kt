@@ -13,7 +13,23 @@ data class AppItem(
     val label: String
 )
 
-suspend fun getInstalledApps(context: Context): List<AppItem> = withContext(Dispatchers.IO) {
+private var cachedApps: List<AppItem>? = null
+
+suspend fun getInstalledApps(context: Context): List<AppItem> {
+    cachedApps?.let { return it }
+    return fetchInstalledApps(context).also { cachedApps = it }
+}
+
+suspend fun updateInstalledAppsCache(context: Context): List<AppItem>? {
+    val newApps = fetchInstalledApps(context)
+    if (newApps != cachedApps) {
+        cachedApps = newApps
+        return newApps
+    }
+    return null
+}
+
+private suspend fun fetchInstalledApps(context: Context): List<AppItem> = withContext(Dispatchers.IO) {
     val pm = context.packageManager
     val intent = Intent(Intent.ACTION_MAIN, null).apply {
         addCategory(Intent.CATEGORY_LAUNCHER)

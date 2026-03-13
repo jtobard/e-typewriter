@@ -76,6 +76,7 @@ import androidx.compose.material3.windowsizeclass.calculateWindowSizeClass
 import androidx.compose.material3.windowsizeclass.WindowWidthSizeClass
 
 import com.etypwwriter.launcher.utils.uninstallApp
+import androidx.activity.compose.BackHandler
 
 class MainActivity : ComponentActivity() {
 
@@ -102,7 +103,7 @@ class MainActivity : ComponentActivity() {
             .components {
                 add(SvgDecoder.Factory())
             }
-            .logger(coil.util.DebugLogger())
+            .apply { if (BuildConfig.DEBUG) logger(coil.util.DebugLogger()) }
             .build()
         Coil.setImageLoader(imageLoader)
 
@@ -168,6 +169,17 @@ fun LauncherScreen(
     var appToRename by remember { mutableStateOf<String?>(null) }
 
     val iconPackManager = remember { IconPackManager(context) }
+
+    val isAnyStateActive = isDrawerOpen || isEditingFavorites || appPickerSlot != null || appToRename != null
+    BackHandler(enabled = !isAnyStateActive) {
+        // Do nothing to prevent refreshing the home screen
+    }
+
+    BackHandler(enabled = isDrawerOpen) { isDrawerOpen = false }
+    BackHandler(enabled = isEditingFavorites) { isEditingFavorites = false }
+    BackHandler(enabled = appPickerSlot != null) { appPickerSlot = null }
+    BackHandler(enabled = appToRename != null) { appToRename = null }
+
     LaunchedEffect(Unit) {
         iconPackManager.init()
         while (true) {
@@ -246,7 +258,7 @@ fun LauncherScreen(
             modifier = modifier
                 .fillMaxSize()
                 .background(Color.Black)
-                .                pointerInput(Unit) {
+                .pointerInput(Unit) {
                     detectVerticalDragGestures { _, dragAmount ->
                         if (dragAmount < -20) { // Swipe up
                             focusSearchOnOpen = false
@@ -383,7 +395,7 @@ fun AppShortcut(
         if (iconBytes != null) {
             AsyncImage(
                 model = iconBytes,
-                contentDescription = null,
+                contentDescription = name,
                 modifier = Modifier
                     .size(24.dp)
                     .padding(end = 8.dp)
@@ -437,11 +449,14 @@ fun BottomShortcutItem(
     onLongClick: () -> Unit
 ) {
     val context = LocalContext.current
+    val appLabel = remember(packageName) {
+        if (packageName != null) getAppName(context, packageName) else null
+    }
     var iconBytes by remember(packageName) { mutableStateOf<ByteArray?>(null) }
     var androidIconBitmap by remember(packageName) { mutableStateOf<androidx.compose.ui.graphics.ImageBitmap?>(null) }
     
     LaunchedEffect(packageName) {
-        android.util.Log.d("IconPackManager", "LaunchedEffect triggered for bottom shortcut: $packageName")
+        if (BuildConfig.DEBUG) android.util.Log.d("IconPackManager", "LaunchedEffect triggered for bottom shortcut: $packageName")
         if (packageName != null) {
             // Priority 1: Arcticons
             val bytes = iconPackManager.getIconBytes(packageName)
@@ -476,13 +491,13 @@ fun BottomShortcutItem(
         if (iconBytes != null) {
             AsyncImage(
                 model = iconBytes,
-                contentDescription = null,
+                contentDescription = appLabel,
                 modifier = Modifier.fillMaxSize()
             )
         } else if (androidIconBitmap != null) {
             Image(
                 bitmap = androidIconBitmap!!,
-                contentDescription = null,
+                contentDescription = appLabel,
                 modifier = Modifier.fillMaxSize()
             )
         } else {
